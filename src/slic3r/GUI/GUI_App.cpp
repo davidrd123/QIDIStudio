@@ -1,6 +1,9 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
 #include "GUI_Init.hpp"
+#ifdef QIDI_ENABLE_MCP
+#include "QidiMcpServer.hpp"
+#endif
 #include "GUI_ObjectList.hpp"
 #include "GUI_Factories.hpp"
 #include "slic3r/GUI/DeviceWeb/DeviceWebPage.hpp"
@@ -1424,6 +1427,15 @@ void GUI_App::post_init()
            }
         }
     }
+#ifdef QIDI_ENABLE_MCP
+    if (!m_mcp_server && QidiMcpServer::enabled_by_environment()) {
+        m_mcp_server = std::make_unique<QidiMcpServer>();
+        if (!m_mcp_server->start()) {
+            BOOST_LOG_TRIVIAL(error) << "MCP inspection server could not start";
+            m_mcp_server.reset();
+        }
+    }
+#endif
     BOOST_LOG_TRIVIAL(info) << "finished post_init";
 #ifdef _WIN32
     // Sets window property to mainframe so other instances can indentify it.
@@ -2353,6 +2365,9 @@ void GUI_App::init_networking_callbacks()
 
 GUI_App::~GUI_App()
 {
+#ifdef QIDI_ENABLE_MCP
+    stop_mcp_server();
+#endif
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< boost::format(": enter");
     if (app_config != nullptr) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< boost::format(": destroy app_config");
@@ -2810,8 +2825,21 @@ bool GUI_App::OnInit()
     }
 }
 
+#ifdef QIDI_ENABLE_MCP
+void GUI_App::stop_mcp_server()
+{
+    if (m_mcp_server) {
+        m_mcp_server->stop();
+        m_mcp_server.reset();
+    }
+}
+#endif
+
 int GUI_App::OnExit()
 {
+#ifdef QIDI_ENABLE_MCP
+    stop_mcp_server();
+#endif
 #ifdef __APPLE__
     UnRegisterMacPowerCallBack();
 #endif

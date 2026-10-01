@@ -31,5 +31,9 @@ SVG
 .idea/
 test.js
 /.cache/
+/.build-tools/
+/resources/web/device_page/
+/src/slic3r/GUI/DeviceWeb/device_page/dist/
+/src/slic3r/GUI/DeviceWeb/device_page/node_modules/
 .clangd
 /src/slic3r/QIDI/

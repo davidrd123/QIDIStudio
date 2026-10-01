@@ -41,6 +41,7 @@ endif()
 
 option(SLIC3R_STATIC 			"Compile QIDIStudio with static libraries (Boost, TBB, glew)" ${SLIC3R_STATIC_INITIAL})
 option(SLIC3R_GUI    			"Compile QIDIStudio with GUI components (OpenGL, wxWidgets)" 1)
+option(QIDI_ENABLE_MCP "Build the experimental local inspection MCP server" OFF)
 option(SLIC3R_FHS               "Assume QIDIStudio is to be installed in a FHS directory structure" 0)
 option(SLIC3R_WX_STABLE         "Build against wxWidgets stable (3.0) as oppsed to dev (3.1) on Linux" 0)
 option(SLIC3R_PROFILE 			"Compile QIDIStudio with an invasive Shiny profiler" 0)

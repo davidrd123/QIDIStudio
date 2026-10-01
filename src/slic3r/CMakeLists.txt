@@ -241,8 +241,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/DownloadManager.hpp
     GUI/QDSDeviceManager.cpp
     GUI/QDSDeviceManager.hpp
-    QIDI/UserPresetSyncManager.cpp
-    QIDI/UserPresetSyncManager.hpp
     GUI/BedShapeDialog.cpp
     GUI/BedShapeDialog.hpp
     GUI/Plater.cpp
@@ -676,6 +674,8 @@ add_subdirectory(GUI/DeviceWeb)
 
 if(QDT_RELEASE_TO_PUBLIC)
 	list(APPEND SLIC3R_GUI_SOURCES
+			QIDI/UserPresetSyncManager.cpp
+			QIDI/UserPresetSyncManager.hpp
 			QIDI/QIDINetwork.cpp
 			QIDI/QIDINetwork.hpp
 			QIDI/QIDINetworkTypes.hpp
@@ -731,7 +731,18 @@ if (UNIX AND NOT APPLE)
     )
 endif ()
 
+if(QIDI_ENABLE_MCP)
+    list(APPEND SLIC3R_GUI_SOURCES
+        GUI/QidiMcpServer.cpp
+        GUI/QidiMcpServer.hpp
+        GUI/QidiMcpProtocol.hpp
+    )
+endif()
+
 add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
+if(QIDI_ENABLE_MCP)
+    target_compile_definitions(libslic3r_gui PUBLIC QIDI_ENABLE_MCP)
+endif()
 
 #if (MSVC)
 #    target_compile_options(libslic3r_gui PRIVATE /Od /Zi)
