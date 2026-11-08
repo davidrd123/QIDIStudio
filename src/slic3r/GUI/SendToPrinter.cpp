@@ -1372,6 +1372,7 @@ void SendToPrinterDialog::start_to_send_p2p(const std::string &source_path,
                                             const std::string &remote_name,
                                             bool is_3mf)
 {
+#if QDT_RELEASE_TO_PUBLIC
     BOOST_LOG_TRIVIAL(info) << "P2P upload start, source=" << source_path
                             << ", remote=" << remote_name << ", is_3mf=" << is_3mf;
 
@@ -1449,6 +1450,10 @@ void SendToPrinterDialog::start_to_send_p2p(const std::string &source_path,
         }
     });
     m_p2p_upload_thread.detach();
+#else
+    show_status(PrintDialogStatus::PrintStatusPublicUploadFiled);
+    update_print_status_msg(_L("P2P upload is unavailable in this build."), false, true);
+#endif
 }
 
 void SendToPrinterDialog::clear_ip_address_config(wxCommandEvent& e)

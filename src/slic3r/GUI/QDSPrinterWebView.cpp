@@ -76,8 +76,12 @@
 #include "../QIDI/P2PManager.hpp"
 #endif
 
+#if QDT_RELEASE_TO_PUBLIC
 #include "../QIDI/QIDIDeviceApi.hpp"
 #include "../QIDI/QIDIFileManager.hpp"
+#else
+#include "QidiLocalDeviceApi.hpp"
+#endif
 #include "BaseTransparentDPIFrame.hpp"
 namespace pt = boost::property_tree;
 

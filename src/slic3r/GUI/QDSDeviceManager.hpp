@@ -24,7 +24,11 @@
 #include "nlohmann/json.hpp"
 #include "libslic3r/GCode/ThumbnailData.hpp"
 
+#if QDT_RELEASE_TO_PUBLIC
 #include "../QIDI/QIDIDeviceWebSocket.hpp"
+#else
+#include "QidiLocalDeviceWebSocket.hpp"
+#endif
 
 using namespace nlohmann;
 
@@ -517,7 +521,11 @@ private:
     std::mutex callback_mutex_;
     std::unordered_map<std::string, std::shared_ptr<QDSDevice>> devices_;
     // WebSocket 连接管理已抽离到 QIDIDeviceWebSocket（成员 m_ws）
+#if QDT_RELEASE_TO_PUBLIC
     std::unique_ptr<QIDIDeviceWebSocket> m_ws;
+#else
+    std::unique_ptr<QidiLocalDeviceWebSocket> m_ws;
+#endif
 
 #if QDT_RELEASE_TO_PUBLIC
     std::vector<NetDevice> net_devices;

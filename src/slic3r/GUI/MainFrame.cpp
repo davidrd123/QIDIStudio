@@ -625,6 +625,9 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 
         MarkdownTip::ExitTip();
 
+#ifdef QIDI_ENABLE_MCP
+        wxGetApp().stop_mcp_server();
+#endif
         m_plater->reset();
         
         //y74

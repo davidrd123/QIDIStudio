@@ -522,7 +522,8 @@ void PartSkipDialog::DownloadOneFile(const std::string &remote_name, const std::
             });
     }
 #else
-
+    // The public build has no file-transfer adapter for this feature.
+    m_download_failed.store(true);
     int left = m_pending_downloads.fetch_sub(1) - 1;
     if (left == 0) {
         CallAfter([this] { OnAllDownloadsFinished(); });

@@ -1,6 +1,8 @@
 
 include(ProcessorCount)
-ProcessorCount(NPROC)
+if(NOT DEFINED NPROC)
+    ProcessorCount(NPROC)
+endif()
 
 if(DEFINED OPENSSL_ARCH)
     set(_cross_arch ${OPENSSL_ARCH})

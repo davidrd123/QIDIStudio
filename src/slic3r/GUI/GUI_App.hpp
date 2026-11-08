@@ -93,6 +93,9 @@ class TaskManager;
 
 namespace GUI{
 
+#ifdef QIDI_ENABLE_MCP
+class QidiMcpServer;
+#endif
 class RemovableDriveManager;
 class OtherInstanceMessageHandler;
 class MainFrame;
@@ -285,6 +288,9 @@ private:
     bool            m_app_conf_exists{ false };
     EAppMode        m_app_mode{ EAppMode::Editor };
     bool            m_is_recreating_gui{ false };
+#ifdef QIDI_ENABLE_MCP
+    std::unique_ptr<QidiMcpServer> m_mcp_server;
+#endif
 #if defined(__WXOSX__)
     // STUDIO-18472: after the Filament Manager WKWebView has churned (tab visit +
     // language-switch GUI rebuilds) macOS stops reliably waking the run loop to
@@ -400,6 +406,9 @@ public:
     std::string     get_local_models_path();
     bool            OnInit() override;
     int             OnExit() override;
+#ifdef QIDI_ENABLE_MCP
+    void            stop_mcp_server();
+#endif
     bool            initialized() const { return m_initialized; }
     inline bool     is_enable_multi_machine() { return this->app_config&& this->app_config->get("enable_multi_machine") == "true"; }
 

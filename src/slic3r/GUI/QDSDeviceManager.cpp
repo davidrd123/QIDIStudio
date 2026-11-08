@@ -44,8 +44,12 @@
 #include "../QIDI/P2PManager.hpp"
 #endif
 
+#if QDT_RELEASE_TO_PUBLIC
 #include "../QIDI/QIDIDeviceApi.hpp"
 #include "../QIDI/QIDIFileManager.hpp"
+#else
+#include "QidiLocalDeviceApi.hpp"
+#endif
 
 //cj_2
 #include <wx/image.h>
@@ -1375,7 +1379,11 @@ const std::vector<char>& get_monitor_placeholder_png()
 } // namespace
 
 QDSDeviceManager::QDSDeviceManager() {
+#if QDT_RELEASE_TO_PUBLIC
     m_ws = std::make_unique<QIDIDeviceWebSocket>();
+#else
+    m_ws = std::make_unique<QidiLocalDeviceWebSocket>();
+#endif
     // Route websocket events back into the manager's device-state logic.
     m_ws->on_status_changed = [this](const std::string& device_id, const std::string& status) {
         updateDeviceStatus(device_id, status);
@@ -1660,7 +1668,12 @@ bool QDSDeviceManager::removeDevice(const std::string& device_id) {
 }
 
 bool QDSDeviceManager::connectDevice(const std::string device_id) {
+#if QDT_RELEASE_TO_PUBLIC
     return m_ws->connect(device_id, getDevice(device_id));
+#else
+    auto device = getDevice(device_id);
+    return device && m_ws->connect(device_id, device->m_url);
+#endif
 }
 
 bool QDSDeviceManager::disconnectDevice(const std::string& device_id) {
