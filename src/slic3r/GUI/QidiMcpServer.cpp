@@ -4,6 +4,7 @@
 // commit d85c905619f6637eed24b6967a4a8659ab3641bf).
 // The project/plate serializers and GUI dispatch pattern retain that authorship.
 // Modified 2026-09-30 for authenticated portable inspection and bounded teardown.
+// Reviewed 2026-11-07 for settings scope and immediate local-port reuse.
 // This version deliberately exposes no mutations, network printer access,
 // screenshots, file import/export, or tunnel management.
 #include "QidiMcpServer.hpp"
@@ -232,6 +233,7 @@ json inspect_gui(const std::string& tool, const json& arguments)
         }
         return {{"scope", scope}, {"preset", preset_name}, {"filament_index", index >= 0 ? json(index) : json(nullptr)},
                 {"source", scope == "filament" ? "assigned_preset_with_current_edits" : "edited_tab_config"},
+                {"configuration_layer", "project_preset"}, {"includes_plate_object_volume_overrides", false},
                 {"values", std::move(values)}};
     }
     PartPlate* plate = require_plate(plater);
@@ -378,6 +380,9 @@ struct QidiMcpServer::Impl {
         const tcp::endpoint endpoint(boost::asio::ip::address_v4::loopback(), McpProtocol::port);
         boost::system::error_code ec;
         acceptor.open(endpoint.protocol(), ec);
+        // Completed HTTP connections can leave this local address in TIME_WAIT.
+        // Permit immediate app relaunch without enabling shared listeners.
+        if (!ec) acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
         if (!ec) acceptor.bind(endpoint, ec);
         if (!ec) acceptor.listen(8, ec);
         if (!ec) acceptor.non_blocking(true, ec);

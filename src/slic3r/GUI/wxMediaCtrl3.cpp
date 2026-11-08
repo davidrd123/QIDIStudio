@@ -823,6 +823,8 @@ void VideoPanel::PlayThread()
             NotifyStopped();
         }
         qdsfmsg.stopVideo(videoToken);
+#else
+        SetErrorAndNotify(-1, "Live view is unavailable in this build.");
 #endif
         m_video_active.store(false);
         {

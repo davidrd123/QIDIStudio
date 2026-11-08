@@ -1238,6 +1238,7 @@ void WebViewPanel::SendQidiModelList(bool on)
             }
 
             // y84
+#if QDT_RELEASE_TO_PUBLIC
             MakerHttpHandle::getInstance().get_qidi_model_list(
                 [this](std::string body, unsigned status) {
                     if (status == 200) {
@@ -1259,6 +1260,9 @@ void WebViewPanel::SendQidiModelList(bool on)
                 [this](std::string body, std::string error, unsigned status) {
                     BOOST_LOG_TRIVIAL(error) << "SendQidiModelList error: " << error << " (HTTP " << status << ")";
                 });
+#else
+            BOOST_LOG_TRIVIAL(info) << "QIDI model catalog requires the private network module";
+#endif
         } else {
             std::string body2 = "{\"code\":200, \"data\":{\"records\":[]}}";
             body2.insert(1, "\"command\": \"qidi_model_list_get\", ");

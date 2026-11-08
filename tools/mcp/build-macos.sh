@@ -33,6 +33,7 @@ fi
 
 if [ "$task_phase" = all ] || [ "$task_phase" = app ]; then
     sh "$task_root/tools/mcp/run-protocol-tests.sh"
+    QIDI_DEPS_PREFIX="$task_prefix" sh "$task_root/tools/mcp/run-local-network-tests.sh"
     cmake -S "$task_root" -B "$task_build" -G Ninja \
         -DCMAKE_PREFIX_PATH="$task_prefix" \
         -DCMAKE_INSTALL_PREFIX="$task_build/QIDIStudio" \

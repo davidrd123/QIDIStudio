@@ -2,7 +2,7 @@
 // Protocol boundary for the portable inspection-only QIDI Studio MCP integration.
 // Based on the MCP integration by sslinkyy (https://github.com/sslinkyy/QIDIStudio),
 // with a restricted registry and independently testable request validation.
-// Source commit: d85c905619f6637eed24b6967a4a8659ab3641bf. Modified 2026-09-30.
+// Source commit: d85c905619f6637eed24b6967a4a8659ab3641bf. Modified 2026-09-30 and 2026-11-07.
 #ifndef slic3r_GUI_QidiMcpProtocol_hpp_
 #define slic3r_GUI_QidiMcpProtocol_hpp_
 
@@ -165,7 +165,7 @@ inline const std::array<Tool, 11>& registry()
         {"get_object_state", "Inspect one model object's geometry and transforms.", Tool::Object},
         {"list_object_volumes", "Inspect one model object's volumes and filament assignments.", Tool::Object},
         {"get_active_presets", "Inspect active preset names and whether each edited preset is dirty.", Tool::None},
-        {"get_slice_settings", "Read effective edited print/printer or assigned filament settings by key.", Tool::Settings},
+        {"get_slice_settings", "Read project-level edited print/printer or assigned filament settings by key. Does not merge plate, object, or volume overrides.", Tool::Settings},
         {"get_slice_status", "Inspect the active plate's current slicing state.", Tool::None},
         {"get_slice_result", "Inspect completed slicing estimates and warnings.", Tool::None}
     }};
@@ -269,7 +269,7 @@ inline json handle_rpc(const json& request, const std::function<json(const std::
             const auto version = request["params"].value("protocolVersion", "");
             result = {{"protocolVersion", supported_version(version) ? version : "2025-06-18"},
                       {"capabilities", {{"tools", {{"listChanged", false}}}}},
-                      {"serverInfo", {{"name", "qidi-studio-inspection"}, {"version", "0.1.0"}}},
+                      {"serverInfo", {{"name", "qidi-studio-inspection"}, {"version", "0.1.1"}}},
                       {"instructions", "Experimental inspection-only QIDI Studio server. Source (AGPL v3): https://github.com/davidrd123/QIDIStudio"}};
         } else if (method == "ping") result = json::object();
         else if (method == "tools/list") result = list_tools();
