@@ -1,7 +1,6 @@
 {
     "type": "filament",
-    "filament_id": "QD_3_1_4",
-    "setting_id": "GFSL99",
+    "filament_id": "QFA05",
     "name": "QIDI PLA Silk@X-Max 4-Series",
     "from": "system",
     "instantiation": "false",
@@ -23,6 +22,7 @@
     "nozzle_temperature": ["220"],
     "overhang_fan_threshold": ["50%"],
     "pressure_advance": ["0.024"],
+    "slow_down_layer_time": ["10"],
     "supertack_plate_temp_initial_layer": ["45"],
     "supertack_plate_temp": ["45"],
     "cool_plate_temp_initial_layer": ["45"],

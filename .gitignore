@@ -37,3 +37,5 @@ test.js
 /src/slic3r/GUI/DeviceWeb/device_page/node_modules/
 .clangd
 /src/slic3r/QIDI/
+/deps/pgLibConnect
+.workbuddy

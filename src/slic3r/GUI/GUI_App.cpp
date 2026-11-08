@@ -132,6 +132,8 @@
 //cj_2
 #if QDT_RELEASE_TO_PUBLIC
 #include "../QIDI/QIDINetwork.hpp"
+#include "../QIDI/QIDIMQTTManager.hpp"
+#include "../QIDI/P2PManager.hpp"
 #endif
 
 #ifdef __WXMSW__
@@ -1098,6 +1100,13 @@ void GUI_App::post_init()
     if (! this->initialized())
         throw Slic3r::RuntimeError("Calling post_init() while not yet initialized");
 
+    //y84
+#if QDT_RELEASE_TO_PUBLIC
+    PresetCollection::s_on_sync_state_changed = []() {
+        UserPresetSyncManager::instance().triggerSync();
+    };
+#endif
+
     if (app_config->get("sync_user_preset") == "true") {
         //cj_5 UserPresetSyncManager does not depend on m_agent.
         //if (m_agent) { start_sync_user_preset(); }
@@ -1140,11 +1149,11 @@ void GUI_App::post_init()
                     boost::starts_with(input_str, "https://makerworld") ||
                     boost::starts_with(input_str, "http://public-cdn.qdtmw.com") ||
                     boost::starts_with(input_str, "https://public-cdn.qdtmw.com") ||
+                    boost::starts_with(input_str, "https://public-cdn.qidimaker") ||
                     boost::algorithm::contains(input_str, "amazonaws.com") ||
                     boost::algorithm::contains(input_str, "aliyuncs.com") ||
                     //y80
-                    boost::algorithm::contains(input_str, "www.qidimaker.com") ||
-                    boost::algorithm::contains(input_str, "www.qidimaker.com.cn")) {
+                    boost::algorithm::contains(input_str, "qidimaker")) {
                     download_url = input_str;
                 }
                 else {
@@ -1357,7 +1366,9 @@ void GUI_App::post_init()
             this->preset_updater->sync(http_url, language, network_ver, sys_preset ? preset_bundle : nullptr);
 
             //QDS: check new version
+#if QDT_RELEASE_TO_PUBLIC
             this->check_new_version();
+#endif
             //QDS: check privacy version
             if (is_user_login()) {
                 this->check_privacy_version(0);
@@ -1521,14 +1532,6 @@ void GUI_App::set_devices(std::vector<NetDevice> devices)
     qdsdevmanager->setNetDevices(devices);
 }
 #endif
-
-//y83
-bool GUI_App::is_selected_device_support_p2p() {
-    auto qds_set = qdsdevmanager->getSelectedDevice();
-    if (qds_set)
-        return qds_set->active_p2p;
-    return false;
-}
 
 std::string GUI_App::get_http_url(std::string country_code, std::string path)
 {
@@ -2297,7 +2300,7 @@ void GUI_App::init_networking_callbacks()
                     if (sel && sel->get_dev_id() == dev_id) {
                         obj->parse_json("cloud", msg);
                         GUI::wxGetApp().sidebar().load_ams_list(obj);
-                        // STUDIO-18155: AMS ×´Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ store + ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶Ë£ï¿½
+                        // STUDIO-18155: AMS ×´Ì¬±ä»¯Çý¶¯ºÄ²ÄÍ¬²½£¨±¾µØ store + ½ÚÁ÷ºóÔÆ¶Ë£©
                         if (auto* sync = wxGetApp().fila_manager_sync()) sync->on_device_update(obj);
                     } else {
                         obj->parse_json("cloud", msg, true);
@@ -2346,7 +2349,7 @@ void GUI_App::init_networking_callbacks()
                     obj->parse_json("lan", msg);
                     if (this->m_device_manager->get_selected_machine() == obj) {
                         GUI::wxGetApp().sidebar().load_ams_list(obj);
-                        // STUDIO-18155: AMS ×´Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ store + ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶Ë£ï¿½
+                        // STUDIO-18155: AMS ×´Ì¬±ä»¯Çý¶¯ºÄ²ÄÍ¬²½£¨±¾µØ store + ½ÚÁ÷ºóÔÆ¶Ë£©
                         if (auto* sync = wxGetApp().fila_manager_sync()) sync->on_device_update(obj);
                     }
                 }
@@ -2369,6 +2372,9 @@ GUI_App::~GUI_App()
     stop_mcp_server();
 #endif
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< boost::format(": enter");
+#if QDT_RELEASE_TO_PUBLIC
+    MQTTManager::instance().disconnect();
+#endif
     if (app_config != nullptr) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< boost::format(": destroy app_config");
         delete app_config;
@@ -3398,7 +3404,7 @@ bool GUI_App::on_init_inner()
             m_fila_manager_sync = new wgtFilaManagerSync(m_fila_manager_store);
             BOOST_LOG_TRIVIAL(info) << "Filament Manager sync initialized";
         }
-        // Cloud layer ï¿½ï¿½ owns HTTP client, high-level sync and the serialization dispatcher.
+        // Cloud layer ¡ª owns HTTP client, high-level sync and the serialization dispatcher.
         if (!m_fila_manager_cloud_client) {
             m_fila_manager_cloud_client = new wgtFilaManagerCloudClient();
             BOOST_LOG_TRIVIAL(info) << "Filament Manager cloud client initialized";
@@ -4642,14 +4648,11 @@ void GUI_App::set_login_info(){
     bool has_token = (wxGetApp().app_config->get("user_token") != "");
     if(has_token){
         std::string head_name = wxGetApp().app_config->get("user_head_name");
-        bool is_link = app_config->get("login_method") != "Maker";
         wxString user_head_path;
         boost::filesystem::path head_dir = boost::filesystem::path(Slic3r::data_dir()) / "user";
-        if (!is_link) {
-            std::string maker_id = app_config->get("preset_folder");
-            if (!maker_id.empty())
-                head_dir = head_dir / maker_id;
-        }
+        std::string maker_id = app_config->get("preset_folder");
+        if (!maker_id.empty())
+            head_dir = head_dir / maker_id;
         user_head_path = (head_dir / head_name).make_preferred().string();
         std::replace(user_head_path.begin(), user_head_path.end(), '\\', '/');
 
@@ -4666,26 +4669,19 @@ void GUI_App::get_login_info(int online_login)
 	//y77
 	bool has_token = (wxGetApp().app_config->get("user_token") != "");
 	if (has_token) {
-        BOOST_LOG_TRIVIAL(info) << "user token msg: login method is " << wxGetApp().app_config->get("login_method") << __FUNCTION__;
-			if (m_qidi_login) {
-				m_pending_manual_login = false;
-                set_login_info();
-                return;
-			}
+        if (m_qidi_login) {
+            m_pending_manual_login = false;
+            set_login_info();
+            return;
+        }
+        BOOST_LOG_TRIVIAL(info) <<  __FUNCTION__ << "user logined, the token is " << wxGetApp().app_config->get("user_token");
 		//cj_5 Save old user ID before login overwrites preset_folder, used to decide if we need to clear old presets.
-			//cj_5 Save old user ID before login overwrites preset_folder. Fallback to persisted value.
-				m_last_login_user_id = app_config->get("preset_folder");
-				if (m_last_login_user_id.empty())
-					m_last_login_user_id = app_config->get("last_login_user_id");
-			bool is_link = app_config->get("login_method") != "Maker";
-		if (is_link) {
-			wxString    msg;
-			QIDINetwork m_qidinetwork;
-			m_user_name = m_qidinetwork.user_info(msg);
-		}
-		else {
-			m_user_name = MakerHttpHandle::getInstance().get_maker_user_name();
-		}
+        //cj_5 Save old user ID before login overwrites preset_folder. Fallback to persisted value.
+        m_last_login_user_id = app_config->get("preset_folder");
+        if (m_last_login_user_id.empty())
+            m_last_login_user_id = app_config->get("last_login_user_id");
+
+        m_user_name = MakerHttpHandle::getInstance().get_maker_user_name();
 
 		std::string head_name = wxGetApp().app_config->get("user_head_name");
 		if (!m_user_name.empty()) {
@@ -4693,11 +4689,9 @@ void GUI_App::get_login_info(int online_login)
 			if (!head_name.empty()) {
 				//cj_5 Maker avatars are stored under user/{preset_folder}/ subfolder.
 				boost::filesystem::path head_dir = boost::filesystem::path(Slic3r::data_dir()) / "user";
-				if (!is_link) {
-					std::string maker_id = app_config->get("preset_folder");
-					if (!maker_id.empty())
-						head_dir = head_dir / maker_id;
-				}
+                std::string maker_id = app_config->get("preset_folder");
+                if (!maker_id.empty())
+                    head_dir = head_dir / maker_id;
 				user_head_path = (head_dir / head_name).make_preferred().string();
 				std::replace(user_head_path.begin(), user_head_path.end(), '\\', '/');
 			}
@@ -4710,15 +4704,6 @@ void GUI_App::get_login_info(int online_login)
 			m_qidi_login = true;
 			request_user_handle(online_login);
 			m_pending_manual_login = false;
-		}
-		else if (!is_link) {
-			BOOST_LOG_TRIVIAL(info) << "user_token is out of date" << "  " << __FUNCTION__;
-			std::string new_token = MakerHttpHandle::getInstance().refresh_token();
-			wxGetApp().app_config->set("user_token", new_token);
-		}
-		else {
-            BOOST_LOG_TRIVIAL(trace) << "user's name is empty" << "   " << __FUNCTION__;
-			wxGetApp().app_config->set("user_token", "");
 		}
 
 		if (wxGetApp().app_config->get("user_token") == "") {
@@ -4744,18 +4729,16 @@ std::string GUI_App::get_current_user_id() const
 #if QDT_RELEASE_TO_PUBLIC
     if (app_config) {
         std::string maker_id = app_config->get("preset_folder");
-        BOOST_LOG_TRIVIAL(trace) << "[login] get_current_user_id: preset_folder=" << maker_id;
         if (!maker_id.empty()) return maker_id;
     }
 #endif
-    BOOST_LOG_TRIVIAL(trace) << "[login] get_current_user_id: fallback to default";
     return DEFAULT_USER_FOLDER_NAME;
 }
 
 bool GUI_App::is_user_login()
 {
 #if QDT_RELEASE_TO_PUBLIC
-    // cj_5 Check token-based login (Maker) ï¿½ï¿½ no longer depends on deprecated m_agent DLL.
+    // cj_5 Check token-based login (Maker) ¡ª no longer depends on deprecated m_agent DLL.
     if (app_config && !app_config->get("user_token").empty())
         return true;
     if (m_agent)
@@ -4808,6 +4791,10 @@ void GUI_App::request_user_logout()
     app_config->set("last_login_user_id", "");
 #if QDT_RELEASE_TO_PUBLIC
     UserPresetSyncManager::instance().stop();
+    //y84
+    // ÓÃ»§ÍË³öµÇÂ¼£ºÏÈÏÔÊ½ÍË¶© U/<userid>£¬ÔÙ¶Ï¿ª broker Á¬½Ó¡£
+    MQTTManager::instance().unsubscribe_user_topic();
+    MQTTManager::instance().disconnect();
 #endif
     m_last_login_user_id.clear();
     app_config->set("preset_folder", "");
@@ -4827,6 +4814,13 @@ void GUI_App::request_user_logout()
     if (mainframe && mainframe->m_webview) {
         mainframe->m_webview->MWLoad();
     }
+
+#if QDT_RELEASE_TO_PUBLIC
+    if (P2PManager::instance().isInited())
+        P2PManager::instance().shutdown();
+
+    MQTTManager::instance().disconnect();
+#endif
 
 #if 0
     if (m_agent && m_agent->is_user_login()) {
@@ -4858,8 +4852,8 @@ void GUI_App::request_user_logout()
         if (!m_disable_fila_manager && m_fila_manager_cloud_disp) {
             m_fila_manager_cloud_disp->clear_pending();
         }
-        // STUDIO-18155: ï¿½ï¿½ AMS auto-push ï¿½ï¿½ï¿½ï¿½ï¿½Ë±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ëºï¿½ A ï¿½ï¿½ cooldown
-        // Ó°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ëºï¿½ B ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ sync ï¿½ï¿½ï¿½ï¿½ push ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
+        // STUDIO-18155: Çå AMS auto-push ½ÚÁ÷ÕË±¾£¬±ÜÃâÕËºÅ A µÄ cooldown
+        // Ó°ÏìµÇÈëÕËºÅ B ºóµÚÒ»´Î sync ´¥·¢ push µÄÊ±»ú¡£
         if (!m_disable_fila_manager && m_fila_manager_cloud_sync) {
             m_fila_manager_cloud_sync->throttle().clear_all();
         }
@@ -5571,8 +5565,8 @@ void GUI_App::on_user_login_handle(wxCommandEvent &evt)
 //     });
 
     //cj_5 Load user presets and optionally start cloud sync.
-    // online_login=1: manual login ï¿½ï¿½ show sync dialog for first-time config.
-    // online_login=0: auto login  ï¿½ï¿½ load presets silently, sync if already enabled.
+    // online_login=1: manual login ¡ª show sync dialog for first-time config.
+    // online_login=0: auto login  ¡ª load presets silently, sync if already enabled.
     {
         std::string new_user_id = get_current_user_id();
 
@@ -5593,7 +5587,7 @@ void GUI_App::on_user_login_handle(wxCommandEvent &evt)
         mainframe->update_side_preset_ui();
 
         //y83
-        if (online_login && !wxGetApp().is_link_connect()) {
+        if (online_login) {
             // Manual login: ask user whether to enable sync.
             GUI::wxGetApp().mainframe->show_sync_dialog();
         } else {
@@ -5622,6 +5616,25 @@ void GUI_App::on_user_login_handle(wxCommandEvent &evt)
             mainframe->m_webview->MWLoad();
         }
     }
+}
+
+//y84
+void GUI_App::fetch_and_connect_mqtt_license()
+{
+#if QDT_RELEASE_TO_PUBLIC
+    std::string mqtt_cid, mqtt_user, mqtt_pass, mqtt_url, mqtt_err;
+    if (MakerHttpHandle::getInstance().fetch_mqtt_license(mqtt_cid, mqtt_user, mqtt_pass, mqtt_url, mqtt_err)) {
+        MQTTManager::MqttLicense lic;
+        lic.client_id  = mqtt_cid;
+        lic.username   = mqtt_user;
+        lic.password   = mqtt_pass;
+        lic.server_url = mqtt_url;
+        // Òì²½½øÐÐ£¬±ÜÃâ×èÈûµÇÂ¼»Øµ÷Ö÷Ïß³Ì¡£
+        std::thread([lic]() { MQTTManager::instance().connect(lic); }).detach();
+    } else {
+        BOOST_LOG_TRIVIAL(error) << "fetch_mqtt_license failed: " << mqtt_err;
+    }
+#endif
 }
 
 
@@ -5716,11 +5729,11 @@ void GUI_App::check_update(bool show_tips, int by_user)
     }
 }
 //B y41
+#if QDT_RELEASE_TO_PUBLIC
 void GUI_App::check_new_version(bool show_tips, int by_user)
 {
 #if QDT_RELEASE_TO_PUBLIC
-    QIDINetwork qidi;
-    qidi.check_new_version(show_tips, by_user);
+    QIDIMakerUrlBuilder::getInstance().check_new_version(show_tips, by_user);
 #endif
 
 #if 0
@@ -5794,6 +5807,7 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
 #endif
 
 }
+#endif
 
 #if QDT_RELEASE_TO_PUBLIC
 void GUI_App::update_versioninfo(QIDIVersion version)
@@ -7763,9 +7777,10 @@ void GUI_App::MacOpenURL(const wxString& url)
         std::string decoded_url = url_decode(download_origin_url);
         std::string download_file_url;
 #if QDT_RELEASE_TO_PUBLIC
-        if (boost::starts_with(decoded_url, "http://makerworld") || boost::starts_with(decoded_url, "https://makerworld") ||
+        if (boost::starts_with(decoded_url, "http://makerworld") || boost::starts_with(decoded_url, "https://makerworld") || 
             boost::starts_with(decoded_url, "http://public-cdn.bblmw.com") || boost::starts_with(decoded_url, "https://public-cdn.bblmw.com") ||
-            boost::algorithm::contains(decoded_url, "amazonaws.com") || boost::algorithm::contains(decoded_url, "aliyuncs.com")) {
+            boost::starts_with(decoded_url, "https://public-cdn.qidimaker") ||
+            boost::algorithm::contains(decoded_url, "amazonaws.com") || boost::algorithm::contains(decoded_url, "aliyuncs.com") || boost::algorithm::contains(decoded_url, "qidimaker")) {
             download_file_url = decoded_url;
         } else {
             MessageDialog msg_dlg(nullptr, _L("This file is not from a trusted site, do you want to open it anyway?"), "", wxAPPLY | wxYES_NO);
@@ -7932,36 +7947,6 @@ void GUI_App::open_mall_page_dialog()
 
     //model api url
     host_url = get_model_http_url(app_config->get_country_code());
-
-    //model url
-
-//y83
-    // wxString language_code = this->current_language_code().BeforeFirst('_');
-    // model_url = language_code.ToStdString();
-
-    // if (getAgent() && mainframe) {
-
-    //     //login already
-    //     if (getAgent()->is_user_login()) {
-    //         std::string ticket;
-    //         result = getAgent()->request_bind_ticket(&ticket);
-
-    //         if(result == 0){
-    //             link_url = host_url + "api/sign-in/ticket?to=" + host_url + url_encode(model_url) + "&ticket=" + ticket;
-    //         }
-    //     }
-    // }
-
-    // if (result < 0) {
-    //    link_url = host_url + model_url;
-    // }
-
-    // if (link_url.find("?") != std::string::npos) {
-    //     link_url += "&from=qidistudio";
-    // } else {
-    //     link_url += "?from=qidistudio";
-    // }
-
     wxLaunchDefaultBrowser(host_url);
 }
 
@@ -8834,3 +8819,4 @@ void TryLoadLastMachine::InnerLoad(NetworkAgent* agent, DeviceManager* dev)
 
 } // GUI
 } //Slic3r
+

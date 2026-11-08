@@ -2284,19 +2284,20 @@ wxBoxSizer* MainFrame::create_side_tools()
                 p->append_button(send_to_printer_btn);
                 p->append_button(export_sliced_file_btn);
 
-                if (enable_multi_machine) {
-                    SideButton* print_multi_machine_btn = new SideButton(p, _L("Send to Multi-device"), "");
-                    print_multi_machine_btn->SetCornerRadius(0);
-                    print_multi_machine_btn->Bind(wxEVT_BUTTON, [this, p](wxCommandEvent&) {
-                        m_print_btn->SetLabel(_L("Send to Multi-device"));
-                        m_print_select = ePrintMultiMachine;
-                        m_print_enable = get_enable_print_status();
-                        m_print_btn->Enable(m_print_enable);
-                        this->Layout();
-                        p->Dismiss();
-                        });
-                    p->append_button(print_multi_machine_btn);
-                }
+                //y84
+                // if (enable_multi_machine) {
+                //     SideButton* print_multi_machine_btn = new SideButton(p, _L("Send to Multi-device"), "");
+                //     print_multi_machine_btn->SetCornerRadius(0);
+                //     print_multi_machine_btn->Bind(wxEVT_BUTTON, [this, p](wxCommandEvent&) {
+                //         m_print_btn->SetLabel(_L("Send to Multi-device"));
+                //         m_print_select = ePrintMultiMachine;
+                //         m_print_enable = get_enable_print_status();
+                //         m_print_btn->Enable(m_print_enable);
+                //         this->Layout();
+                //         p->Dismiss();
+                //         });
+                //     p->append_button(print_multi_machine_btn);
+                // }
             }
             else {
                 //QIDI Studio Buttons
@@ -2389,19 +2390,20 @@ wxBoxSizer* MainFrame::create_side_tools()
                 }
 
 
-                if (enable_multi_machine) {
-                    SideButton* print_multi_machine_btn = new SideButton(p, _L("Send to Multi-device"), "");
-                    print_multi_machine_btn->SetCornerRadius(0);
-                    print_multi_machine_btn->Bind(wxEVT_BUTTON, [this, p](wxCommandEvent&) {
-                        m_print_btn->SetLabel(_L("Send to Multi-device"));
-                        m_print_select = ePrintMultiMachine;
-                        m_print_enable = get_enable_print_status();
-                        m_print_btn->Enable(m_print_enable);
-                        this->Layout();
-                        p->Dismiss();
-                        });
-                    p->append_button(print_multi_machine_btn);
-                }
+                //y84
+                // if (enable_multi_machine) {
+                //     SideButton* print_multi_machine_btn = new SideButton(p, _L("Send to Multi-device"), "");
+                //     print_multi_machine_btn->SetCornerRadius(0);
+                //     print_multi_machine_btn->Bind(wxEVT_BUTTON, [this, p](wxCommandEvent&) {
+                //         m_print_btn->SetLabel(_L("Send to Multi-device"));
+                //         m_print_select = ePrintMultiMachine;
+                //         m_print_enable = get_enable_print_status();
+                //         m_print_btn->Enable(m_print_enable);
+                //         this->Layout();
+                //         p->Dismiss();
+                //         });
+                //     p->append_button(print_multi_machine_btn);
+                // }
             }
 
             p->Popup(m_print_btn);
@@ -2827,12 +2829,14 @@ static wxMenu* generate_help_menu()
     //        //TODO
     //    });
     // Check New Version
+#if QDT_RELEASE_TO_PUBLIC
     append_menu_item(helpMenu, wxID_ANY, _L("Check for Update"), _L("Check for Update"),
         [](wxCommandEvent&) {
             wxGetApp().check_new_version(true, 1);
         }, "", nullptr, []() {
             return true;
         });
+#endif
 //B
     //     append_menu_item(helpMenu, wxID_ANY, _L("Check for Presets Update"), _L("Check for Presets Update"), [](wxCommandEvent &) {
     //     wxGetApp().check_config_updates_from_menu();
@@ -4568,7 +4572,6 @@ void MainFrame::remove_recent_project(size_t file_id, wxString const &filename)
 
 void MainFrame::load_url(wxString url)
 {
-    // BOOST_LOG_TRIVIAL(trace) << "load_url";
     auto evt = new wxCommandEvent(EVT_LOAD_URL, this->GetId());
     evt->SetString(url);
     wxQueueEvent(this, evt);
@@ -4576,7 +4579,6 @@ void MainFrame::load_url(wxString url)
 
 void MainFrame::load_printer_url(wxString url)
 {
-    // BOOST_LOG_TRIVIAL(trace) << "load_printer_url";
     auto evt = new wxCommandEvent(EVT_LOAD_PRINTER_URL, this->GetId());
     evt->SetString(url);
     wxQueueEvent(this, evt);
@@ -4829,3 +4831,4 @@ void SettingsDialog::on_dpi_changed(const wxRect& suggested_rect)
 
 } // GUI
 } // Slic3r
+

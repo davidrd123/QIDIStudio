@@ -1,7 +1,6 @@
 {
     "type": "filament",
-    "filament_id": "QD_3_1_2",
-    "setting_id": "GFSL99",
+    "filament_id": "QFA03",
     "name": "QIDI PLA Rapido Matte@X-Max 4-Series",
     "from": "system",
     "instantiation": "false",
@@ -12,7 +11,7 @@
     "eng_plate_temp" : ["55"],
     "additional_cooling_fan_speed": ["100"],
     "fan_cooling_layer_time": ["100"],
-    "fan_min_speed": ["60"],
+    "fan_min_speed": ["100"],
     "filament_adhesiveness_category": ["100"],
     "filament_density": ["1.42"],
     "filament_type": ["PLA"],

@@ -1,10 +1,11 @@
 {
     "type": "filament",
-    "setting_id": "GFSL99",
+    "setting_id": "QFSA03_28",
     "name": "QIDI PLA Rapido Matte @Qidi X-Max 4 0.8 nozzle",
     "from": "system",
     "instantiation": "true",
     "inherits": "QIDI PLA Rapido Matte@X-Max 4-Series",
     "pressure_advance": ["0.008"],
+    "slow_down_layer_time": ["6"],
 	"compatible_printers": ["X-Max 4 0.8 nozzle"]
 }

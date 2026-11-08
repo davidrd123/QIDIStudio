@@ -1,7 +1,6 @@
 {
     "type": "filament",
-    "filament_id": "QD_3_1_42",
-    "setting_id": "GFSG99",
+    "filament_id": "QFG50",
     "name": "QIDI PETG-CF@X-Max 4-Series",
     "from": "system",
     "instantiation": "false",
@@ -30,6 +29,7 @@
     "overhang_fan_threshold": ["10%"],
     "pressure_advance": ["0.048"],
     "slow_down_layer_time": ["6"],
+    "slow_down_min_speed": ["10"],
     "temperature_vitrification": ["70"],
     "textured_plate_temp_initial_layer" : ["70"],
     "textured_plate_temp" : ["70"],
